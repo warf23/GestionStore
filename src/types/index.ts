@@ -10,12 +10,14 @@ export type Sale = Tables<'ventes'>
 export type SaleLine = Tables<'lignes_vente'>
 export type Purchase = Tables<'achats'>
 export type PurchaseLine = Tables<'lignes_achat'>
+export type ActivityLog = Tables<'activity_logs'>
 
 export type CreateUser = InsertTables<'utilisateurs'>
 export type CreateSale = InsertTables<'ventes'>
 export type CreateSaleLine = InsertTables<'lignes_vente'>
 export type CreatePurchase = InsertTables<'achats'>
 export type CreatePurchaseLine = InsertTables<'lignes_achat'>
+export type CreateActivityLog = InsertTables<'activity_logs'>
 
 export type UserRole = 'admin' | 'employe'
 

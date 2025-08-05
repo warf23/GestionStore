@@ -11,9 +11,11 @@ import {
   Menu, 
   X, 
   LogOut,
-  Store
+  Store,
+  Activity
 } from 'lucide-react'
 import { AuthUser } from '@/types'
+import { ENABLE_EMPLOYEE_TRACKING } from '@/lib/constants'
 
 interface DashboardNavigationProps {
   user: AuthUser
@@ -28,7 +30,10 @@ export function DashboardNavigation({ user }: DashboardNavigationProps) {
     ...(user.role === 'admin' ? [
       { name: 'Ventes', href: '/dashboard/sales', icon: ShoppingCart },
       { name: 'Achats', href: '/dashboard/purchases', icon: Package },
-      { name: 'Utilisateurs', href: '/dashboard/users', icon: Users }
+      { name: 'Utilisateurs', href: '/dashboard/users', icon: Users },
+      ...(ENABLE_EMPLOYEE_TRACKING ? [
+        { name: 'Suivi Activités', href: '/dashboard/tracking', icon: Activity }
+      ] : [])
     ] : [
       { name: 'Ventes', href: '/dashboard/sales', icon: ShoppingCart }
     ]),

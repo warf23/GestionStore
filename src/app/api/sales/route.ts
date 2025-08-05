@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUser } from '@/lib/auth'
+import { logActivity, formatActivityDetails } from '@/lib/activity-logger'
 
 // GET - Fetch all sales with their lines and user info
 export async function GET(request: NextRequest) {
@@ -123,6 +124,17 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Log the activity
+    await logActivity({
+      userId: parseInt(user.id),
+      actionType: 'CREATE',
+      tableName: 'ventes',
+      recordId: sale.id,
+      newData: { ...sale, lignes_vente: saleLines },
+      details: formatActivityDetails('CREATE', 'ventes', sale),
+      request
+    })
 
     return NextResponse.json({ 
       message: 'Vente créée avec succès',

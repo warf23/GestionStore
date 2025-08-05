@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUser } from '@/lib/auth'
+import { logActivity, formatActivityDetails } from '@/lib/activity-logger'
 
 // GET - Fetch single sale with details
 export async function GET(
@@ -68,16 +69,24 @@ export async function PUT(
 
     const supabase = createAdminClient()
 
+    // Get the current sale data before modification for logging
+    const { data: currentSale } = await supabase
+      .from('ventes')
+      .select(`
+        *,
+        lignes_vente(*)
+      `)
+      .eq('id', params.id)
+      .single()
+
+    if (!currentSale) {
+      return NextResponse.json({ error: 'Vente non trouvée' }, { status: 404 })
+    }
+
     // Check if user can edit this sale
     if (user.role === 'employe') {
       // Employees can only edit their own sales
-      const { data: sale } = await supabase
-        .from('ventes')
-        .select('utilisateur_id')
-        .eq('id', params.id)
-        .single()
-
-      if (!sale || sale.utilisateur_id !== parseInt(user.id)) {
+      if (currentSale.utilisateur_id !== parseInt(user.id)) {
         return NextResponse.json({ error: 'Vous ne pouvez modifier que vos propres ventes' }, { status: 403 })
       }
     }
@@ -138,6 +147,25 @@ export async function PUT(
       )
     }
 
+    // Log the activity
+    const newSaleData = {
+      id: parseInt(params.id),
+      nom_client,
+      total,
+      lignes_vente: saleLines
+    }
+
+    await logActivity({
+      userId: parseInt(user.id),
+      actionType: 'UPDATE',
+      tableName: 'ventes',
+      recordId: parseInt(params.id),
+      oldData: currentSale,
+      newData: newSaleData,
+      details: formatActivityDetails('UPDATE', 'ventes', newSaleData),
+      request
+    })
+
     return NextResponse.json({ 
       message: 'Vente mise à jour avec succès'
     })
@@ -165,16 +193,24 @@ export async function DELETE(
 
     const supabase = createAdminClient()
 
+    // Get sale data before deletion for logging
+    const { data: saleToDelete } = await supabase
+      .from('ventes')
+      .select(`
+        *,
+        lignes_vente(*)
+      `)
+      .eq('id', params.id)
+      .single()
+
+    if (!saleToDelete) {
+      return NextResponse.json({ error: 'Vente non trouvée' }, { status: 404 })
+    }
+
     // Check if user can delete this sale
     if (user.role === 'employe') {
       // Employees can only delete their own sales
-      const { data: sale } = await supabase
-        .from('ventes')
-        .select('utilisateur_id')
-        .eq('id', params.id)
-        .single()
-
-      if (!sale || sale.utilisateur_id !== parseInt(user.id)) {
+      if (saleToDelete.utilisateur_id !== parseInt(user.id)) {
         return NextResponse.json({ error: 'Vous ne pouvez supprimer que vos propres ventes' }, { status: 403 })
       }
     }
@@ -191,6 +227,17 @@ export async function DELETE(
         { status: 500 }
       )
     }
+
+    // Log the activity
+    await logActivity({
+      userId: parseInt(user.id),
+      actionType: 'DELETE',
+      tableName: 'ventes',
+      recordId: parseInt(params.id),
+      oldData: saleToDelete,
+      details: formatActivityDetails('DELETE', 'ventes', { id: params.id }),
+      request
+    })
 
     return NextResponse.json({ 
       message: 'Vente supprimée avec succès'

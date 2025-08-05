@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getCurrentUser } from '@/lib/auth'
+import { logActivity, formatActivityDetails } from '@/lib/activity-logger'
 
 // GET - Fetch all purchases with their lines and user info
 export async function GET(request: NextRequest) {
