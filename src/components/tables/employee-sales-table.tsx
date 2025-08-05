@@ -130,14 +130,14 @@ export function EmployeeSalesTable({ user }: EmployeeSalesTableProps) {
           </div>
           <div className="text-sm text-gray-600">Articles que j'ai Vendus</div>
         </div>
-        <div className="bg-white p-6 rounded-lg border">
+        {/* <div className="bg-white p-6 rounded-lg border">
           <div className="text-2xl font-bold text-orange-600">
             {mySales.length > 0 ? (
               mySales.reduce((sum, sale) => sum + parseFloat(sale.total.toString()), 0) / mySales.length
             ).toFixed(2) : '0.00'} DH
           </div>
           <div className="text-sm text-gray-600">Mon Panier Moyen</div>
-        </div>
+        </div> */}
       </div>
 
       {/* Table */}

@@ -49,13 +49,13 @@ export function EmployeeDashboard({ user }: EmployeeDashboardProps) {
       color: 'text-blue-600 bg-blue-100',
       description: 'Quantité totale',
     },
-    {
-      name: 'Panier Moyen',
-      value: isLoading ? '...' : `${stats?.averageBasket.toFixed(2) || '0.00'} DH`,
-      icon: TrendingUp,
-      color: 'text-orange-600 bg-orange-100',
-      description: 'Par transaction',
-    },
+    // {
+    //   name: 'Panier Moyen',
+    //   value: isLoading ? '...' : `${stats?.averageBasket.toFixed(2) || '0.00'} DH`,
+    //   icon: TrendingUp,
+    //   color: 'text-orange-600 bg-orange-100',
+    //   description: 'Par transaction',
+    // },
   ]
 
   return (

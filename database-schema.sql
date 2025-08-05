@@ -128,6 +128,40 @@ CREATE POLICY "Users can update purchase lines" ON lignes_achat FOR UPDATE TO au
     )
 );
 
+-- Table de suivi des activités des employés
+CREATE TABLE activity_logs (
+    id SERIAL PRIMARY KEY,
+    utilisateur_id INT REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    action_type VARCHAR(50) NOT NULL CHECK (action_type IN ('CREATE', 'UPDATE', 'DELETE')),
+    table_name VARCHAR(50) NOT NULL CHECK (table_name IN ('ventes', 'achats', 'utilisateurs')),
+    record_id INT NOT NULL,
+    old_data JSONB,
+    new_data JSONB,
+    details TEXT,
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pour optimiser les requêtes de suivi
+CREATE INDEX idx_activity_logs_utilisateur_id ON activity_logs(utilisateur_id);
+CREATE INDEX idx_activity_logs_table_name ON activity_logs(table_name);
+CREATE INDEX idx_activity_logs_action_type ON activity_logs(action_type);
+CREATE INDEX idx_activity_logs_created_at ON activity_logs(created_at);
+CREATE INDEX idx_activity_logs_record_id ON activity_logs(record_id);
+
+-- RLS pour les logs d'activité
+ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
+
+-- Politique pour les logs d'activité - seuls les admins peuvent les voir
+CREATE POLICY "Admins can view all activity logs" ON activity_logs 
+    FOR SELECT TO authenticated USING (
+        EXISTS (
+            SELECT 1 FROM utilisateurs 
+            WHERE id::text = auth.uid()::text AND role = 'admin'
+        )
+    );
+
 -- Insertion d'un utilisateur admin par défaut (mot de passe: admin123)
 -- Hash bcrypt pour 'admin123': $2b$10$rOZPaNz0zK5qP1J0qZ5J9.Xv6QZ5J9eJ5qZ5J9eJ5qZ5J9eJ5qZ5J
 INSERT INTO utilisateurs (email, nom, prenom, role, password_hash) 

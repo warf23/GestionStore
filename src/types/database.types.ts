@@ -127,6 +127,47 @@ export interface Database {
           prix_unitaire?: number
         }
       }
+      activity_logs: {
+        Row: {
+          id: number
+          utilisateur_id: number | null
+          action_type: 'CREATE' | 'UPDATE' | 'DELETE'
+          table_name: 'ventes' | 'achats' | 'utilisateurs'
+          record_id: number
+          old_data: any | null
+          new_data: any | null
+          details: string | null
+          ip_address: string | null
+          user_agent: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          utilisateur_id?: number | null
+          action_type: 'CREATE' | 'UPDATE' | 'DELETE'
+          table_name: 'ventes' | 'achats' | 'utilisateurs'
+          record_id: number
+          old_data?: any | null
+          new_data?: any | null
+          details?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          utilisateur_id?: number | null
+          action_type?: 'CREATE' | 'UPDATE' | 'DELETE'
+          table_name?: 'ventes' | 'achats' | 'utilisateurs'
+          record_id?: number
+          old_data?: any | null
+          new_data?: any | null
+          details?: string | null
+          ip_address?: string | null
+          user_agent?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {}
     Functions: {}

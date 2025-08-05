@@ -92,8 +92,6 @@ export async function PUT(
       )
     }
 
-    const supabase = createAdminClient()
-
     // Calculate new total
     const total = lignes.reduce((sum: number, ligne: any) => 
       sum + (ligne.quantite * ligne.prix_unitaire), 0
