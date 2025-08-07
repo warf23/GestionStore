@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/hooks/use-categories'
 import { EnhancedCategoryList } from '@/components/categories/enhanced-category-list'
 import { LowStockAlerts } from '@/components/alerts/low-stock-alerts'
+import { WoodTypesManagement } from '@/components/wood-types/wood-types-management'
 
 interface CategoryFormData {
   nom: string
@@ -99,7 +100,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Paramètres</h1>
-          <p className="text-gray-600 mt-1">Gérez les catégories de produits et surveillez les stocks</p>
+          <p className="text-gray-600 mt-1">Gérez les catégories, types de bois et surveillez les stocks</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button
@@ -270,6 +271,9 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* Wood Types Management */}
+      <WoodTypesManagement />
     </div>
   )
 }

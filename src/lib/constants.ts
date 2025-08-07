@@ -23,6 +23,7 @@ export const ENABLE_EXPORT_FEATURES = false
 
 export const APP_NAME = 'GestionStore'
 export const VERSION = '1.0.0'
+export const COMPANY_NAME = 'GestionStore'
 
 // Pagination defaults
 export const DEFAULT_PAGE_SIZE = 20

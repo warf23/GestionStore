@@ -2,10 +2,11 @@
 
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { X, User, Calendar, Package, DollarSign } from 'lucide-react'
+import { X, User, Calendar, Package, DollarSign, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { PurchaseWithLines } from '@/types'
+import { exportPurchasesReportPDF } from '@/lib/report-export'
 
 interface PurchaseViewModalProps {
   isOpen: boolean
@@ -137,6 +138,14 @@ export function PurchaseViewModal({ isOpen, onClose, purchase }: PurchaseViewMod
 
         {/* Footer */}
         <div className="flex items-center justify-end p-6 border-t bg-gray-50">
+          <Button
+            variant="outline"
+            onClick={() => exportPurchasesReportPDF({ purchases: [purchase] })}
+            className="mr-2 flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exporter PDF
+          </Button>
           <Button onClick={onClose}>Fermer</Button>
         </div>
       </div>

@@ -5,11 +5,14 @@ import { Plus, RefreshCw, ShoppingCart } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
 import { createSalesColumns } from './sales-columns'
-import { useSales, useDeleteSale } from '@/hooks/use-sales'
+import { useSales, useDeleteSale, SalesFilters } from '@/hooks/use-sales'
 import { SaleWithLines } from '@/types'
 import { SaleFormModal } from '@/components/forms/sale-form-modal'
 import { SaleViewModal } from '@/components/modals/sale-view-modal'
 import { DeleteConfirmModal } from '@/components/modals/delete-confirm-modal'
+import { DateRangePicker } from '@/components/ui/date-range-picker'
+import { useCategories } from '@/hooks/use-categories'
+import { exportSalesReportPDF } from '@/lib/report-export'
 
 export function SalesTable() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -17,7 +20,9 @@ export function SalesTable() {
   const [viewingSale, setViewingSale] = useState<SaleWithLines | null>(null)
   const [deletingSale, setDeletingSale] = useState<SaleWithLines | null>(null)
 
-  const { data: sales = [], isLoading, error, refetch } = useSales()
+  const [filters, setFilters] = useState<SalesFilters>({})
+  const { data: sales = [], isLoading, error, refetch } = useSales(filters)
+  const { data: categories = [] } = useCategories()
   const deleteMutation = useDeleteSale()
 
   const handleEdit = (sale: SaleWithLines) => {
@@ -177,12 +182,49 @@ export function SalesTable() {
                 </div>
               </div>
               
-              <DataTable
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <DateRangePicker
+                    from={filters.from}
+                    to={filters.to}
+                    onChange={(r) => setFilters((f) => ({ ...f, ...r }))}
+                  />
+                  <select
+                    value={filters.categoryId ?? ''}
+                    onChange={(e) => setFilters((f) => ({ ...f, categoryId: e.target.value ? Number(e.target.value) : undefined }))}
+                    className="h-10 rounded-md border px-3 text-sm"
+                  >
+                    <option value="">Toutes catégories</option>
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nom}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Produit ou client..."
+                    value={filters.q || ''}
+                    onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
+                    className="h-10 rounded-md border px-3 text-sm min-w-[220px]"
+                  />
+                  <Button
+                    variant="outline"
+                    onClick={() => exportSalesReportPDF({
+                      sales,
+                      periodLabel: filters.from || filters.to ? `Période: ${(filters.from||'...')} → ${(filters.to||'...')}` : undefined,
+                      filtersLabel: filters.categoryId || filters.q ? `Filtre: ${filters.categoryId ? 'Catégorie' : ''} ${filters.q ? ' / Mot-clé' : ''}` : undefined,
+                    })}
+                  >
+                    Export PDF
+                  </Button>
+                </div>
+
+                <DataTable
                 columns={columns}
                 data={sales}
                 searchKey="nom_client"
                 searchPlaceholder="Rechercher par nom de client..."
-              />
+                />
+              </div>
             </div>
           )}
         </div>

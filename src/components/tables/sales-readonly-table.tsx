@@ -13,7 +13,7 @@ import { fr } from 'date-fns/locale'
 
 export function SalesReadOnlyTable() {
   const [viewingSale, setViewingSale] = useState<SaleWithLines | null>(null)
-  const { data: sales = [], isLoading, error, refetch } = useSales()
+  const { data: sales = [], isLoading, error, refetch } = useSales({})
 
   const columns: ColumnDef<SaleWithLines>[] = [
     {

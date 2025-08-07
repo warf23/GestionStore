@@ -237,7 +237,11 @@ export function SaleFormModal({ isOpen, onClose, mode, sale }: SaleFormModalProp
       label: product.produit_nom,
       quantite_disponible: product.quantite_disponible,
       dernier_prix_achat: product.dernier_prix_achat,
-      category: 'Produit' // You can enhance this with actual category data later
+      category: product.category_nom || 'Produit',
+      category_nom: product.category_nom || undefined,
+      category_couleur: product.category_couleur || undefined,
+      wood_type_nom: product.wood_type_nom || undefined,
+      wood_type_couleur: product.wood_type_couleur || undefined
     }))
   }
 

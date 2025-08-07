@@ -26,6 +26,12 @@ export interface ProductSuggestion {
   quantite_vendue: number
   quantite_disponible: number
   dernier_prix_achat: number
+  category_id?: number | null
+  category_nom?: string | null
+  category_couleur?: string | null
+  wood_type_id?: number | null
+  wood_type_nom?: string | null
+  wood_type_couleur?: string | null
 }
 
 // Fetch product suggestions with available quantities

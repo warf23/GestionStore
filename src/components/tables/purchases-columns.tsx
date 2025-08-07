@@ -101,11 +101,31 @@ export const createPurchasesColumns = ({
       return (
         <div className="space-y-1">
           {lines.slice(0, 2).map((line, index) => (
-            <div key={index} className="text-sm">
+            <div key={index} className="text-sm flex items-center gap-2 flex-wrap">
               <span className="font-medium">{line.produit_nom}</span>
-              <span className="text-muted-foreground ml-2">
-                x{line.quantite}
-              </span>
+              {line.categories?.nom && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full border"
+                  style={{
+                    borderColor: line.categories?.couleur || '#3B82F6',
+                    color: line.categories?.couleur || '#3B82F6',
+                  }}
+                >
+                  {line.categories.nom}
+                </span>
+              )}
+              {line.wood_types?.nom && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full border"
+                  style={{
+                    borderColor: line.wood_types?.couleur || '#8B4513',
+                    color: line.wood_types?.couleur || '#8B4513',
+                  }}
+                >
+                  {line.wood_types.nom}
+                </span>
+              )}
+              <span className="text-muted-foreground">x{line.quantite}</span>
             </div>
           ))}
           {lines.length > 2 && (

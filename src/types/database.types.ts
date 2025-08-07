@@ -109,6 +109,32 @@ export interface Database {
           prix_unitaire?: number
         }
       }
+      wood_types: {
+        Row: {
+          id: number
+          nom: string
+          description: string | null
+          couleur: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          nom: string
+          description?: string | null
+          couleur?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          nom?: string
+          description?: string | null
+          couleur?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       achats: {
         Row: {
           id: number
@@ -138,6 +164,7 @@ export interface Database {
           achat_id: number
           produit_nom: string
           category_id: number | null
+          wood_type_id: number | null
           quantite: number
           prix_unitaire: number
           total_ligne: number
@@ -147,6 +174,7 @@ export interface Database {
           achat_id: number
           produit_nom: string
           category_id?: number | null
+          wood_type_id?: number | null
           quantite: number
           prix_unitaire: number
         }
@@ -155,6 +183,7 @@ export interface Database {
           achat_id?: number
           produit_nom?: string
           category_id?: number | null
+          wood_type_id?: number | null
           quantite?: number
           prix_unitaire?: number
         }

@@ -2,10 +2,11 @@
 
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { X, User, Calendar, Package, DollarSign } from 'lucide-react'
+import { X, User, Calendar, Package, DollarSign, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SaleWithLines } from '@/types'
+import { exportSaleReceiptPDF } from '@/lib/report-export'
 
 interface SaleViewModalProps {
   isOpen: boolean
@@ -136,7 +137,15 @@ export function SaleViewModal({ isOpen, onClose, sale }: SaleViewModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end p-6 border-t bg-gray-50">
+        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
+          <Button
+            variant="outline"
+            onClick={() => exportSaleReceiptPDF(sale)}
+            className="flex items-center gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exporter le reçu
+          </Button>
           <Button onClick={onClose}>Fermer</Button>
         </div>
       </div>

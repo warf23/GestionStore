@@ -13,9 +13,16 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createAdminClient()
-    
+
+    const { searchParams } = new URL(request.url)
+    const from = searchParams.get('from')
+    const to = searchParams.get('to')
+    const q = searchParams.get('q')?.toLowerCase() || ''
+    const categoryId = searchParams.get('categoryId')
+    const woodTypeId = searchParams.get('woodTypeId')
+
     // Fetch purchases with user info and lines
-    const { data: purchases, error } = await supabase
+    let query = supabase
       .from('achats')
       .select(`
         *,
@@ -29,12 +36,32 @@ export async function GET(request: NextRequest) {
           id,
           produit_nom,
           category_id,
+          wood_type_id,
           quantite,
           prix_unitaire,
-          total_ligne
+          total_ligne,
+          categories:category_id (
+            id,
+            nom,
+            couleur
+          ),
+          wood_types:wood_type_id (
+            id,
+            nom,
+            couleur
+          )
         )
       `)
       .order('date_achat', { ascending: false })
+
+    if (from) {
+      query = query.gte('date_achat', from)
+    }
+    if (to) {
+      query = query.lte('date_achat', to)
+    }
+
+    const { data: rawPurchases, error } = await query
 
     if (error) {
       console.error('Error fetching purchases:', error)
@@ -42,6 +69,20 @@ export async function GET(request: NextRequest) {
         { error: 'Erreur lors de la récupération des achats' },
         { status: 500 }
       )
+    }
+
+    let purchases = rawPurchases || []
+    if (q || categoryId || woodTypeId) {
+      purchases = purchases.filter((purchase: any) => {
+        const fournisseurMatch = purchase.nom_fournisseur?.toLowerCase().includes(q)
+        const lineMatch = (purchase.lignes_achat || []).some((line: any) => {
+          const matchesQ = q ? line.produit_nom?.toLowerCase().includes(q) : true
+          const matchesCategory = categoryId ? String(line.category_id) === String(categoryId) : true
+          const matchesWood = woodTypeId ? String(line.wood_type_id) === String(woodTypeId) : true
+          return matchesQ && matchesCategory && matchesWood
+        })
+        return (q ? (fournisseurMatch || lineMatch) : true) && lineMatch
+      })
     }
 
     return NextResponse.json({ purchases })
@@ -104,6 +145,7 @@ export async function POST(request: NextRequest) {
       achat_id: purchase.id,
       produit_nom: ligne.produit_nom,
       category_id: ligne.category_id,
+      wood_type_id: ligne.wood_type_id || null,
       quantite: ligne.quantite,
       prix_unitaire: ligne.prix_unitaire
     }))

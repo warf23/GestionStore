@@ -110,6 +110,8 @@ export async function PUT(
     const purchaseLines = lignes.map((ligne: any) => ({
       achat_id: parseInt(params.id),
       produit_nom: ligne.produit_nom,
+      category_id: ligne.category_id,
+      wood_type_id: ligne.wood_type_id || null,
       quantite: ligne.quantite,
       prix_unitaire: ligne.prix_unitaire
     }))

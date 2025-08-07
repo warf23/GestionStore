@@ -12,6 +12,10 @@ export interface ProductAutocompleteOption {
   quantite_disponible: number
   dernier_prix_achat: number
   category?: string
+  category_nom?: string
+  category_couleur?: string
+  wood_type_nom?: string | null
+  wood_type_couleur?: string | null
 }
 
 interface ProductAutocompleteProps {
@@ -48,9 +52,27 @@ export const ProductAutocomplete = forwardRef<HTMLInputElement, ProductAutocompl
     const filteredOptions = value.trim() 
       ? options.filter(option => 
           option.label.toLowerCase().includes(value.toLowerCase()) ||
-          option.category?.toLowerCase().includes(value.toLowerCase())
+          option.category?.toLowerCase().includes(value.toLowerCase()) ||
+          option.category_nom?.toLowerCase().includes(value.toLowerCase()) ||
+          option.wood_type_nom?.toLowerCase().includes(value.toLowerCase())
         )
       : options
+
+    // Group options by category for better organization
+    const groupedOptions = filteredOptions.reduce((groups, option) => {
+      const categoryName = option.category_nom || option.category || 'Sans catégorie'
+      if (!groups[categoryName]) {
+        groups[categoryName] = {
+          category: categoryName,
+          color: option.category_couleur || '#6B7280',
+          options: []
+        }
+      }
+      groups[categoryName].options.push(option)
+      return groups
+    }, {} as Record<string, { category: string; color: string; options: ProductAutocompleteOption[] }>)
+
+    const sortedGroups = Object.values(groupedOptions).sort((a, b) => a.category.localeCompare(b.category))
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -78,22 +100,24 @@ export const ProductAutocomplete = forwardRef<HTMLInputElement, ProductAutocompl
         return
       }
 
+      const totalOptions = filteredOptions.length
+
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault()
           setHighlightedIndex(prev => 
-            prev < filteredOptions.length - 1 ? prev + 1 : 0
+            prev < totalOptions - 1 ? prev + 1 : 0
           )
           break
         case 'ArrowUp':
           e.preventDefault()
           setHighlightedIndex(prev => 
-            prev > 0 ? prev - 1 : filteredOptions.length - 1
+            prev > 0 ? prev - 1 : totalOptions - 1
           )
           break
         case 'Enter':
           e.preventDefault()
-          if (highlightedIndex >= 0 && highlightedIndex < filteredOptions.length) {
+          if (highlightedIndex >= 0 && highlightedIndex < totalOptions) {
             handleSelectOption(filteredOptions[highlightedIndex])
           }
           break
@@ -183,55 +207,89 @@ export const ProductAutocomplete = forwardRef<HTMLInputElement, ProductAutocompl
                 {filteredOptions.length} produit{filteredOptions.length > 1 ? 's' : ''} disponible{filteredOptions.length > 1 ? 's' : ''}
               </div>
               
-              {filteredOptions.map((option, index) => {
-                const stockStatus = getStockStatus(option.quantite_disponible)
-                const StatusIcon = stockStatus.icon
+              {/* Grouped Options */}
+              {sortedGroups.map((group, groupIndex) => {
+                let currentIndex = 0
+                // Calculate the starting index for this group
+                for (let i = 0; i < groupIndex; i++) {
+                  currentIndex += sortedGroups[i].options.length
+                }
                 
                 return (
-                  <div
-                    key={`${option.value}-${index}`}
-                    className={cn(
-                      "px-4 py-3 cursor-pointer transition-colors duration-150 border-b border-gray-50 last:border-b-0",
-                      "hover:bg-blue-50 hover:border-blue-100",
-                      highlightedIndex === index && "bg-blue-50 border-blue-100"
-                    )}
-                    onClick={() => handleSelectOption(option)}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium text-gray-900 truncate">
-                            {option.label}
-                          </h4>
-                          {option.category && (
-                            <Badge variant="secondary" className="text-xs">
-                              {option.category}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className={cn("flex items-center gap-1", stockStatus.color)}>
-                            <StatusIcon className="h-3 w-3" />
-                            <span className="text-sm font-medium">
-                              {option.quantite_disponible} en stock
-                            </span>
-                          </div>
-                          
-                          <div className="text-sm text-gray-600">
-                            Dernier prix: <span className="font-medium">{option.dernier_prix_achat.toFixed(2)} DH</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className={cn(
-                        "flex items-center justify-center w-8 h-8 rounded-full ml-3",
-                        stockStatus.bgColor
-                      )}>
-                        <StatusIcon className={cn("h-4 w-4", stockStatus.color)} />
+                  <div key={group.category} className="border-b border-gray-100 last:border-b-0">
+                    {/* Category Header */}
+                    <div className="px-4 py-2 bg-gray-50/50 border-b border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: group.color }}
+                        />
+                        <span className="text-sm font-medium text-gray-700">{group.category}</span>
+                        <span className="text-xs text-gray-500">({group.options.length})</span>
                       </div>
                     </div>
+                    
+                    {/* Category Options */}
+                    {group.options.map((option, optionIndex) => {
+                      const absoluteIndex = currentIndex + optionIndex
+                      const stockStatus = getStockStatus(option.quantite_disponible)
+                      const StatusIcon = stockStatus.icon
+                      
+                      return (
+                        <div
+                          key={`${option.value}-${absoluteIndex}`}
+                          className={cn(
+                            "px-4 py-3 cursor-pointer transition-colors duration-150 border-b border-gray-50 last:border-b-0",
+                            "hover:bg-blue-50 hover:border-blue-100",
+                            highlightedIndex === absoluteIndex && "bg-blue-50 border-blue-100"
+                          )}
+                          onClick={() => handleSelectOption(option)}
+                          onMouseEnter={() => setHighlightedIndex(absoluteIndex)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-gray-900 truncate">
+                                  {option.label}
+                                </h4>
+                                {option.wood_type_nom && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className="text-xs border-amber-200 text-amber-700 bg-amber-50"
+                                    style={{ 
+                                      borderColor: option.wood_type_couleur || '#D97706',
+                                      color: option.wood_type_couleur || '#D97706'
+                                    }}
+                                  >
+                                    🌳 {option.wood_type_nom}
+                                  </Badge>
+                                )}
+                              </div>
+                              
+                              <div className="flex items-center gap-4 mt-1">
+                                <div className={cn("flex items-center gap-1", stockStatus.color)}>
+                                  <StatusIcon className="h-3 w-3" />
+                                  <span className="text-sm font-medium">
+                                    {option.quantite_disponible} en stock
+                                  </span>
+                                </div>
+                                
+                                <div className="text-sm text-gray-600">
+                                  Dernier prix: <span className="font-medium">{option.dernier_prix_achat.toFixed(2)} DH</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className={cn(
+                              "flex items-center justify-center w-8 h-8 rounded-full ml-3",
+                              stockStatus.bgColor
+                            )}>
+                              <StatusIcon className={cn("h-4 w-4", stockStatus.color)} />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )
               })}

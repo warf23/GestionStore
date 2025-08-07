@@ -30,9 +30,15 @@ export async function GET(
         lignes_vente (
           id,
           produit_nom,
+          category_id,
           quantite,
           prix_unitaire,
-          total_ligne
+          total_ligne,
+          categories:category_id (
+            id,
+            nom,
+            couleur
+          )
         )
       `)
       .eq('id', params.id)

@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCreatePurchase, useUpdatePurchase } from '@/hooks/use-purchases'
 import { useCategories } from '@/hooks/use-categories'
+import { useWoodTypes } from '@/hooks/use-wood-types'
 import { PurchaseWithLines } from '@/types'
 
 const purchaseSchema = z.object({
@@ -18,6 +19,7 @@ const purchaseSchema = z.object({
   lignes: z.array(z.object({
     produit_nom: z.string().min(1, 'Le nom du produit est requis'),
     category_id: z.number().min(1, 'La catégorie est requise'),
+    wood_type_id: z.number().nullable().optional(),
     quantite: z.number().min(1, 'La quantité doit être au moins 1'),
     prix_unitaire: z.number().min(0, 'Le prix doit être positif'),
   })).min(1, 'Au moins une ligne d\'achat est requise'),
@@ -39,6 +41,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
   const createMutation = useCreatePurchase()
   const updateMutation = useUpdatePurchase()
   const { data: categories = [] } = useCategories()
+  const { data: woodTypes = [] } = useWoodTypes()
 
   const {
     register,
@@ -51,7 +54,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
     resolver: zodResolver(purchaseSchema),
     defaultValues: {
       nom_fournisseur: '',
-      lignes: [{ produit_nom: '', category_id: 0, quantite: 1, prix_unitaire: 0 }],
+      lignes: [{ produit_nom: '', category_id: 0, wood_type_id: null, quantite: 1, prix_unitaire: 0 }],
     },
   })
 
@@ -76,6 +79,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
           lignes: purchase.lignes_achat.map(line => ({
             produit_nom: line.produit_nom,
             category_id: line.category_id || (categories.length > 0 ? categories[0].id : 0),
+            wood_type_id: line.wood_type_id || null,
             quantite: line.quantite,
             prix_unitaire: parseFloat(line.prix_unitaire.toString()),
           })),
@@ -83,7 +87,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
       } else {
         reset({
           nom_fournisseur: '',
-          lignes: [{ produit_nom: '', category_id: categories.length > 0 ? categories[0].id : 0, quantite: 1, prix_unitaire: 0 }],
+          lignes: [{ produit_nom: '', category_id: categories.length > 0 ? categories[0].id : 0, wood_type_id: null, quantite: 1, prix_unitaire: 0 }],
         })
       }
       setError(null)
@@ -111,7 +115,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
   }
 
   const addLine = () => {
-    append({ produit_nom: '', category_id: categories.length > 0 ? categories[0].id : 0, quantite: 1, prix_unitaire: 0 })
+    append({ produit_nom: '', category_id: categories.length > 0 ? categories[0].id : 0, wood_type_id: null, quantite: 1, prix_unitaire: 0 })
   }
 
   const removeLine = (index: number) => {
@@ -175,8 +179,8 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
 
               <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
-                    <div className="col-span-4">
+                  <div key={field.id} className="grid grid-cols-12 gap-3 items-end p-4 border rounded-lg">
+                    <div className="col-span-3">
                       <Label htmlFor={`lignes.${index}.produit_nom`}>Produit</Label>
                       <Input
                         {...register(`lignes.${index}.produit_nom`)}
@@ -213,7 +217,25 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
                     </div>
 
                     <div className="col-span-2">
-                      <Label htmlFor={`lignes.${index}.quantite`}>Quantité</Label>
+                      <Label htmlFor={`lignes.${index}.wood_type_id`}>Type de Bois</Label>
+                      <select
+                        {...register(`lignes.${index}.wood_type_id`, { 
+                          valueAsNumber: true,
+                          setValueAs: (value) => value === "" ? null : Number(value)
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Aucun</option>
+                        {woodTypes.map(woodType => (
+                          <option key={woodType.id} value={woodType.id}>
+                            {woodType.nom}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="col-span-1">
+                      <Label htmlFor={`lignes.${index}.quantite`}>Qté</Label>
                       <Input
                         type="number"
                         min="1"
@@ -228,7 +250,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
                     </div>
 
                     <div className="col-span-2">
-                      <Label htmlFor={`lignes.${index}.prix_unitaire`}>Prix Unitaire (DH)</Label>
+                      <Label htmlFor={`lignes.${index}.prix_unitaire`}>Prix (DH)</Label>
                       <Input
                         type="number"
                         step="0.01"
@@ -244,7 +266,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
                     </div>
 
                     <div className="col-span-1">
-                      <Label>Sous-total</Label>
+                      <Label>Total</Label>
                       <div className="text-sm font-medium text-blue-600 mt-2">
                         {((watchedLines[index]?.quantite || 0) * (watchedLines[index]?.prix_unitaire || 0)).toFixed(2)} DH
                       </div>

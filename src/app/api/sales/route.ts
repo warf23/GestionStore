@@ -13,9 +13,15 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = createAdminClient()
-    
-    // Fetch sales with user info and lines
-    const { data: sales, error } = await supabase
+
+    const { searchParams } = new URL(request.url)
+    const from = searchParams.get('from') // ISO date string
+    const to = searchParams.get('to') // ISO date string
+    const q = searchParams.get('q')?.toLowerCase() || ''
+    const categoryId = searchParams.get('categoryId')
+
+    // Base query with joins
+    let query = supabase
       .from('ventes')
       .select(`
         *,
@@ -28,12 +34,28 @@ export async function GET(request: NextRequest) {
         lignes_vente (
           id,
           produit_nom,
+          category_id,
           quantite,
           prix_unitaire,
-          total_ligne
+          total_ligne,
+          categories:category_id (
+            id,
+            nom,
+            couleur
+          )
         )
       `)
       .order('date_vente', { ascending: false })
+
+    // Apply date filters at DB level
+    if (from) {
+      query = query.gte('date_vente', from)
+    }
+    if (to) {
+      query = query.lte('date_vente', to)
+    }
+
+    const { data: rawSales, error } = await query
 
     if (error) {
       console.error('Error fetching sales:', error)
@@ -41,6 +63,24 @@ export async function GET(request: NextRequest) {
         { error: 'Erreur lors de la récupération des ventes' },
         { status: 500 }
       )
+    }
+
+    // Apply in-memory filters that depend on nested arrays
+    let sales = rawSales || []
+    if (q || categoryId) {
+      sales = sales.filter((sale: any) => {
+        const clientMatch = sale.nom_client?.toLowerCase().includes(q)
+        const lineMatch = (sale.lignes_vente || []).some((line: any) => {
+          const matchesQ = q
+            ? line.produit_nom?.toLowerCase().includes(q)
+            : true
+          const matchesCategory = categoryId
+            ? String(line.category_id) === String(categoryId)
+            : true
+          return matchesQ && matchesCategory
+        })
+        return (q ? (clientMatch || lineMatch) : true) && lineMatch
+      })
     }
 
     return NextResponse.json({ sales })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Package, AlertTriangle, TrendingDown, Eye } from 'lucide-react'
+import { ChevronDown, ChevronRight, Package, AlertTriangle, TrendingDown, Eye, TreePine } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useCategoriesWithProducts } from '@/hooks/use-category-products'
@@ -131,6 +131,19 @@ export function EnhancedCategoryList({ onProductClick }: EnhancedCategoryListPro
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">
                             <h4 className="font-medium text-gray-900">{product.produit_nom}</h4>
+                            {product.wood_type_nom && (
+                              <Badge 
+                                variant="outline" 
+                                className="text-xs border-amber-200 text-amber-700 bg-amber-50 flex items-center gap-1"
+                                style={{ 
+                                  borderColor: product.wood_type_couleur || '#D97706',
+                                  color: product.wood_type_couleur || '#D97706'
+                                }}
+                              >
+                                <TreePine className="h-3 w-3" />
+                                {product.wood_type_nom}
+                              </Badge>
+                            )}
                             {product.is_low_stock && (
                               <AlertTriangle className="h-4 w-4 text-orange-500" />
                             )}
@@ -138,7 +151,7 @@ export function EnhancedCategoryList({ onProductClick }: EnhancedCategoryListPro
                           <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                             <span>Acheté: {product.quantite_achetee}</span>
                             <span>Vendu: {product.quantite_vendue}</span>
-                            <span>Prix: {product.dernier_prix_achat.toFixed(2)} €</span>
+                            <span>Prix: {product.dernier_prix_achat.toFixed(2)} DH</span>
                           </div>
                         </div>
                         

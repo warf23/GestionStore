@@ -4,11 +4,25 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { SaleWithLines } from '@/types'
 
 // Fetch all sales
-export function useSales() {
+export interface SalesFilters {
+  from?: string // ISO date
+  to?: string   // ISO date
+  q?: string
+  categoryId?: number | null
+}
+
+export function useSales(filters: SalesFilters = {}) {
+  const params = new URLSearchParams()
+  if (filters.from) params.set('from', filters.from)
+  if (filters.to) params.set('to', filters.to)
+  if (filters.q) params.set('q', filters.q)
+  if (filters.categoryId) params.set('categoryId', String(filters.categoryId))
+
   return useQuery({
-    queryKey: ['sales'],
+    queryKey: ['sales', filters],
     queryFn: async (): Promise<SaleWithLines[]> => {
-      const response = await fetch('/api/sales')
+      const url = params.toString() ? `/api/sales?${params.toString()}` : '/api/sales'
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch sales')
       }

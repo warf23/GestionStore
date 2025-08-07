@@ -4,11 +4,27 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { PurchaseWithLines } from '@/types'
 
 // Fetch all purchases
-export function usePurchases() {
+export interface PurchasesFilters {
+  from?: string
+  to?: string
+  q?: string
+  categoryId?: number | null
+  woodTypeId?: number | null
+}
+
+export function usePurchases(filters: PurchasesFilters = {}) {
+  const params = new URLSearchParams()
+  if (filters.from) params.set('from', filters.from)
+  if (filters.to) params.set('to', filters.to)
+  if (filters.q) params.set('q', filters.q)
+  if (filters.categoryId) params.set('categoryId', String(filters.categoryId))
+  if (filters.woodTypeId) params.set('woodTypeId', String(filters.woodTypeId))
+
   return useQuery({
-    queryKey: ['purchases'],
+    queryKey: ['purchases', filters],
     queryFn: async (): Promise<PurchaseWithLines[]> => {
-      const response = await fetch('/api/purchases')
+      const url = params.toString() ? `/api/purchases?${params.toString()}` : '/api/purchases'
+      const response = await fetch(url)
       if (!response.ok) {
         throw new Error('Failed to fetch purchases')
       }
