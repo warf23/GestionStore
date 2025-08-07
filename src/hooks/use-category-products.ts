@@ -9,6 +9,8 @@ export interface CategoryProduct {
   quantite_disponible: number
   dernier_prix_achat: number
   category_id: number | null
+  category_nom?: string
+  category_couleur?: string
   wood_type_id: number | null
   wood_type_nom: string | null
   wood_type_couleur: string | null

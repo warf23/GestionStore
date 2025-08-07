@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 // PUT /api/categories/[id] - Update category
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -14,7 +14,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Accès refusé - Admin requis' }, { status: 403 })
     }
 
-    const categoryId = parseInt(params.id)
+    const { id } = await params
+    const categoryId = parseInt(id)
     if (isNaN(categoryId)) {
       return NextResponse.json({ error: 'ID de catégorie invalide' }, { status: 400 })
     }
@@ -78,7 +79,7 @@ export async function PUT(
 // DELETE /api/categories/[id] - Delete category
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -87,7 +88,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Accès refusé - Admin requis' }, { status: 403 })
     }
 
-    const categoryId = parseInt(params.id)
+    const { id } = await params
+    const categoryId = parseInt(id)
     if (isNaN(categoryId)) {
       return NextResponse.json({ error: 'ID de catégorie invalide' }, { status: 400 })
     }

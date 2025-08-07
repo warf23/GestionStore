@@ -56,9 +56,14 @@ export async function GET(request: NextRequest) {
       totalRevenue: mySales.reduce((sum, sale) => sum + parseFloat(sale.total.toString()), 0),
       
       // Products stats
-      totalProductsSold: mySales.reduce((sum, sale) => 
-        sum + sale.lignes_vente.reduce((lineSum, line) => lineSum + line.quantite, 0), 0
-      ),
+      totalProductsSold: mySales.reduce((sum: number, sale: any) => {
+        const lines = (sale.lignes_vente ?? []) as Array<{ quantite: number }>
+        const perSaleCount = lines.reduce(
+          (lineSum: number, line: { quantite: number }) => lineSum + line.quantite,
+          0
+        )
+        return sum + perSaleCount
+      }, 0),
       
       // Calculated metrics
       averageBasket: mySales.length > 0 ? 

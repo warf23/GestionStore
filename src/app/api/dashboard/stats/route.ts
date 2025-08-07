@@ -98,12 +98,22 @@ export async function GET(request: NextRequest) {
       totalCosts: allPurchases.reduce((sum, purchase) => sum + parseFloat(purchase.total.toString()), 0),
       
       // Products stats
-      totalProductsSold: allSales.reduce((sum, sale) => 
-        sum + sale.lignes_vente.reduce((lineSum, line) => lineSum + line.quantite, 0), 0
-      ),
-      totalProductsPurchased: allPurchases.reduce((sum, purchase) => 
-        sum + purchase.lignes_achat.reduce((lineSum, line) => lineSum + line.quantite, 0), 0
-      ),
+      totalProductsSold: allSales.reduce((sum: number, sale: any) => {
+        const lines = (sale.lignes_vente ?? []) as Array<{ quantite: number }>
+        const perSaleCount = lines.reduce(
+          (lineSum: number, line: { quantite: number }) => lineSum + line.quantite,
+          0
+        )
+        return sum + perSaleCount
+      }, 0),
+      totalProductsPurchased: allPurchases.reduce((sum: number, purchase: any) => {
+        const lines = (purchase.lignes_achat ?? []) as Array<{ quantite: number }>
+        const perPurchaseCount = lines.reduce(
+          (lineSum: number, line: { quantite: number }) => lineSum + line.quantite,
+          0
+        )
+        return sum + perPurchaseCount
+      }, 0),
       
       // Users
       activeUsers: users.length,

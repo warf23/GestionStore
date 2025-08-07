@@ -7,7 +7,7 @@ import { logActivity, formatActivityDetails } from '@/lib/activity-logger'
 // GET - Fetch single user (Admin only)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser()
@@ -21,7 +21,7 @@ export async function GET(
     const { data: user, error } = await supabase
       .from('utilisateurs')
       .select('id, email, nom, prenom, role, created_at, updated_at')
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single()
 
     if (error) {
@@ -44,7 +44,7 @@ export async function GET(
 // PUT - Update user (Admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser()
@@ -78,7 +78,7 @@ export async function PUT(
       .from('utilisateurs')
       .select('id')
       .eq('email', email)
-      .neq('id', params.id)
+      .neq('id', (await params).id)
       .single()
 
     if (existingUser) {
@@ -105,7 +105,7 @@ export async function PUT(
     const { data: updatedUser, error: updateError } = await supabase
       .from('utilisateurs')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .select('id, email, nom, prenom, role, updated_at')
       .single()
 
@@ -134,7 +134,7 @@ export async function PUT(
 // DELETE - Delete user (Admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const currentUser = await getCurrentUser()
@@ -144,7 +144,7 @@ export async function DELETE(
     }
 
     // Prevent admin from deleting themselves
-    if (currentUser.id === params.id) {
+    if (currentUser.id === (await params).id) {
       return NextResponse.json(
         { error: 'Vous ne pouvez pas supprimer votre propre compte' },
         { status: 400 }
@@ -157,13 +157,13 @@ export async function DELETE(
     const { data: userSales } = await supabase
       .from('ventes')
       .select('id')
-      .eq('utilisateur_id', params.id)
+      .eq('utilisateur_id', (await params).id)
       .limit(1)
 
     const { data: userPurchases } = await supabase
       .from('achats')
       .select('id')
-      .eq('utilisateur_id', params.id)
+      .eq('utilisateur_id', (await params).id)
       .limit(1)
 
     if (userSales && userSales.length > 0) {
@@ -184,7 +184,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('utilisateurs')
       .delete()
-      .eq('id', params.id)
+      .eq('id', (await params).id)
 
     if (error) {
       console.error('Error deleting user:', error)

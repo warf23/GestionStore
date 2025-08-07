@@ -19,7 +19,8 @@ const userSchema = z.object({
   role: z.enum(['admin', 'employe']).default('employe'),
 })
 
-type UserFormData = z.infer<typeof userSchema>
+type UserFormData = z.output<typeof userSchema>
+type UserFormValues = z.input<typeof userSchema>
 
 interface UserFormModalProps {
   isOpen: boolean
@@ -41,19 +42,8 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
     reset,
     watch,
     formState: { errors },
-  } = useForm<UserFormData>({
-    resolver: zodResolver(
-      mode === 'edit' 
-        ? userSchema.extend({
-            password: z.string().optional().refine(
-              (val) => !val || val.length >= 6,
-              { message: 'Le mot de passe doit contenir au moins 6 caractères si renseigné' }
-            )
-          })
-        : userSchema.extend({
-            password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères')
-          })
-    ),
+  } = useForm<UserFormValues>({
+    resolver: zodResolver(userSchema),
     defaultValues: {
       email: '',
       nom: '',
@@ -90,33 +80,40 @@ export function UserFormModal({ isOpen, onClose, mode, user }: UserFormModalProp
     }
   }, [isOpen, mode, user, reset])
 
-  const onSubmit = async (data: UserFormData) => {
+  const onSubmit = async (data: UserFormValues) => {
     setError(null)
     
     try {
       if (mode === 'create') {
-        if (!data.password) {
-          setError('Le mot de passe est requis')
-          return
-        }
+        const createSchema = userSchema.extend({
+          password: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères')
+        })
+        const parsed = createSchema.parse(data)
         await createMutation.mutateAsync({
-          email: data.email,
-          nom: data.nom,
-          prenom: data.prenom,
-          password: data.password,
-          role: data.role,
+          email: parsed.email,
+          nom: parsed.nom,
+          prenom: parsed.prenom,
+          password: parsed.password!,
+          role: parsed.role,
         })
       } else if (mode === 'edit' && user) {
+        const updateSchema = userSchema.extend({
+          password: z.string().optional().refine(
+            (val) => !val || val.length >= 6,
+            { message: 'Le mot de passe doit contenir au moins 6 caractères si renseigné' }
+          )
+        })
+        const parsed = updateSchema.parse(data)
         const updateData: any = {
           id: user.id,
-          email: data.email,
-          nom: data.nom,
-          prenom: data.prenom,
-          role: data.role,
+          email: parsed.email,
+          nom: parsed.nom,
+          prenom: parsed.prenom,
+          role: parsed.role,
         }
         
-        if (data.password) {
-          updateData.password = data.password
+        if (parsed.password) {
+          updateData.password = parsed.password
         }
         
         await updateMutation.mutateAsync(updateData)

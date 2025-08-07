@@ -105,11 +105,11 @@ export async function exportSalesReportPDF(options: {
   doc.line(40, finalY - 10, 800, finalY - 10)
   
   doc.setFontSize(14) // Larger total font
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.text(`TOTAL GÉNÉRAL: ${total.toFixed(2)} DH`, 40, finalY)
 
   // Add summary info
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(100, 100, 100)
   doc.text(`Nombre de ventes: ${options.sales.length}`, 40, finalY + 20)
@@ -218,10 +218,10 @@ export async function exportPurchasesReportPDF(options: {
   doc.line(40, finalY - 10, 800, finalY - 10)
   
   doc.setFontSize(14)
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.text(`TOTAL GÉNÉRAL: ${total.toFixed(2)} DH`, 40, finalY)
 
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
   doc.setTextColor(100, 100, 100)
   doc.text(`Nombre d'achats: ${options.purchases.length}`, 40, finalY + 20)
@@ -296,11 +296,11 @@ export async function exportSaleReceiptPDF(sale: SaleWithLines) {
   doc.line(40, finalY - 5, 380, finalY - 5)
   
   doc.setFontSize(14) // Larger total
-  doc.setFont(undefined, 'bold')
+  doc.setFont('helvetica', 'bold')
   doc.text(`TOTAL: ${Number(sale.total).toFixed(2)} DH`, 40, finalY + 15)
   
   // Add thank you message
-  doc.setFont(undefined, 'normal')
+  doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(100, 100, 100)
   doc.text(`Merci pour votre achat!`, 40, finalY + 35)

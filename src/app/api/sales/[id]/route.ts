@@ -6,7 +6,7 @@ import { logActivity, formatActivityDetails } from '@/lib/activity-logger'
 // GET - Fetch single sale with details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -41,7 +41,7 @@ export async function GET(
           )
         )
       `)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single()
 
     if (error) {
@@ -64,7 +64,7 @@ export async function GET(
 // PUT - Update sale
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -82,7 +82,7 @@ export async function PUT(
         *,
         lignes_vente(*)
       `)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single()
 
     if (!currentSale) {
@@ -143,7 +143,7 @@ export async function PUT(
         nom_client,
         total
       })
-      .eq('id', params.id)
+      .eq('id', (await params).id)
 
     if (saleError) {
       return NextResponse.json(
@@ -156,11 +156,12 @@ export async function PUT(
     await supabase
       .from('lignes_vente')
       .delete()
-      .eq('vente_id', params.id)
+      .eq('vente_id', (await params).id)
 
     // Insert new lines with category_id
+    const { id } = await params
     const saleLines = lignes.map((ligne: any) => ({
-      vente_id: parseInt(params.id),
+      vente_id: parseInt(id),
       produit_nom: ligne.produit_nom,
       category_id: productCategoryMap.get(ligne.produit_nom) || null,
       quantite: ligne.quantite,
@@ -180,7 +181,7 @@ export async function PUT(
 
     // Log the activity
     const newSaleData = {
-      id: parseInt(params.id),
+      id: parseInt((await params).id),
       nom_client,
       total,
       lignes_vente: saleLines
@@ -190,7 +191,7 @@ export async function PUT(
       userId: parseInt(user.id),
       actionType: 'UPDATE',
       tableName: 'ventes',
-      recordId: parseInt(params.id),
+      recordId: parseInt((await params).id),
       oldData: currentSale,
       newData: newSaleData,
       details: formatActivityDetails('UPDATE', 'ventes', newSaleData),
@@ -213,7 +214,7 @@ export async function PUT(
 // DELETE - Delete sale
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -231,7 +232,7 @@ export async function DELETE(
         *,
         lignes_vente(*)
       `)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single()
 
     if (!saleToDelete) {
@@ -250,7 +251,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('ventes')
       .delete()
-      .eq('id', params.id)
+      .eq('id', (await params).id)
 
     if (error) {
       return NextResponse.json(
@@ -264,9 +265,9 @@ export async function DELETE(
       userId: parseInt(user.id),
       actionType: 'DELETE',
       tableName: 'ventes',
-      recordId: parseInt(params.id),
+      recordId: parseInt((await params).id),
       oldData: saleToDelete,
-      details: formatActivityDetails('DELETE', 'ventes', { id: params.id }),
+      details: formatActivityDetails('DELETE', 'ventes', { id: (await params).id }),
       request
     })
 

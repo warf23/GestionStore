@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth'
 // GET /api/wood-types/[id] - Fetch single wood type
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -19,7 +19,7 @@ export async function GET(
     const { data: woodType, error } = await supabase
       .from('wood_types')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single()
 
     if (error) {
@@ -42,7 +42,7 @@ export async function GET(
 // PUT /api/wood-types/[id] - Update wood type
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -71,7 +71,7 @@ export async function PUT(
         couleur: couleur || '#8B4513',
         updated_at: new Date().toISOString()
       })
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .select()
       .single()
 
@@ -106,7 +106,7 @@ export async function PUT(
 // DELETE /api/wood-types/[id] - Delete wood type
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -121,7 +121,7 @@ export async function DELETE(
     const { data: purchases, error: checkError } = await supabase
       .from('lignes_achat')
       .select('id')
-      .eq('wood_type_id', params.id)
+      .eq('wood_type_id', (await params).id)
       .limit(1)
 
     if (checkError) {
@@ -142,7 +142,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('wood_types')
       .delete()
-      .eq('id', params.id)
+      .eq('id', (await params).id)
 
     if (error) {
       console.error('Error deleting wood type:', error)

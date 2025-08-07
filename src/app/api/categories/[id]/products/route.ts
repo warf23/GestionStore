@@ -7,7 +7,7 @@ const LOW_STOCK_THRESHOLD = 5
 // GET /api/categories/[id]/products - Fetch products for a specific category with stock
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -16,7 +16,8 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
     }
 
-    const categoryId = parseInt(params.id)
+    const { id } = await params
+    const categoryId = parseInt(id)
     if (isNaN(categoryId)) {
       return NextResponse.json({ error: 'ID de catégorie invalide' }, { status: 400 })
     }

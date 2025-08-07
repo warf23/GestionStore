@@ -6,7 +6,7 @@ import { logActivity, formatActivityDetails } from '@/lib/activity-logger'
 // GET - Fetch single purchase with details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -35,7 +35,7 @@ export async function GET(
           total_ligne
         )
       `)
-      .eq('id', params.id)
+      .eq('id', (await params).id)
       .single()
 
     if (error) {
@@ -58,7 +58,7 @@ export async function GET(
 // PUT - Update purchase
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -91,7 +91,7 @@ export async function PUT(
         nom_fournisseur,
         total
       })
-      .eq('id', params.id)
+      .eq('id', (await params).id)
 
     if (purchaseError) {
       return NextResponse.json(
@@ -104,11 +104,12 @@ export async function PUT(
     await supabase
       .from('lignes_achat')
       .delete()
-      .eq('achat_id', params.id)
+      .eq('achat_id', (await params).id)
 
     // Insert new lines
+    const { id } = await params
     const purchaseLines = lignes.map((ligne: any) => ({
-      achat_id: parseInt(params.id),
+      achat_id: parseInt(id),
       produit_nom: ligne.produit_nom,
       category_id: ligne.category_id,
       wood_type_id: ligne.wood_type_id || null,
@@ -143,7 +144,7 @@ export async function PUT(
 // DELETE - Delete purchase
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser()
@@ -158,7 +159,7 @@ export async function DELETE(
     const { error } = await supabase
       .from('achats')
       .delete()
-      .eq('id', params.id)
+      .eq('id', (await params).id)
 
     if (error) {
       return NextResponse.json(

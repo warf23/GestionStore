@@ -53,7 +53,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   try {
     // Read user from session cookie
     const { cookies } = await import('next/headers')
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('user-session')
     
     if (!sessionCookie) {
