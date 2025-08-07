@@ -5,6 +5,7 @@ import { ShoppingCart, TrendingUp, Package, DollarSign, RefreshCw, Plus, Award }
 import { useEmployeeDashboardStats } from '@/hooks/use-employee-dashboard'
 import { AuthUser } from '@/types'
 import { Button } from '@/components/ui/button'
+import { LowStockAlerts } from '@/components/alerts/low-stock-alerts'
 
 interface EmployeeDashboardProps {
   user: AuthUser
@@ -79,6 +80,9 @@ export function EmployeeDashboard({ user }: EmployeeDashboardProps) {
           )}
         </div>
       </div>
+
+      {/* Low Stock Alerts - Compact View */}
+      <LowStockAlerts compact={true} />
 
       {/* Today's Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">

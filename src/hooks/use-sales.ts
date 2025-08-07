@@ -50,6 +50,18 @@ export function useCreateSale() {
       queryClient.invalidateQueries({ queryKey: ['sales'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['employee-dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+      queryClient.invalidateQueries({ queryKey: ['product-stock'] })
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] })
+      
+      // Trigger a storage event to notify other components
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('inventory-updated', Date.now().toString())
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'inventory-updated',
+          newValue: Date.now().toString()
+        }))
+      }
     },
   })
 }
@@ -87,7 +99,18 @@ export function useUpdateSale() {
       queryClient.invalidateQueries({ queryKey: ['sales'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['employee-dashboard-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['employee-dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+      queryClient.invalidateQueries({ queryKey: ['product-stock'] })
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] })
+      
+      // Trigger a storage event to notify other components
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('inventory-updated', Date.now().toString())
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'inventory-updated',
+          newValue: Date.now().toString()
+        }))
+      }
     },
   })
 }
@@ -113,6 +136,8 @@ export function useDeleteSale() {
       queryClient.invalidateQueries({ queryKey: ['sales'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['employee-dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+      queryClient.invalidateQueries({ queryKey: ['product-stock'] })
     },
   })
 }

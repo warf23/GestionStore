@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
         lignes_achat (
           id,
           produit_nom,
+          category_id,
           quantite,
           prix_unitaire,
           total_ligne
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
     const purchaseLines = lignes.map((ligne: any) => ({
       achat_id: purchase.id,
       produit_nom: ligne.produit_nom,
+      category_id: ligne.category_id,
       quantite: ligne.quantite,
       prix_unitaire: ligne.prix_unitaire
     }))

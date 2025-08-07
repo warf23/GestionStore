@@ -15,6 +15,16 @@ CREATE TABLE utilisateurs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table des catégories
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    couleur VARCHAR(7) DEFAULT '#3B82F6', -- Hex color code
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Table des ventes
 CREATE TABLE ventes (
     id SERIAL PRIMARY KEY,
@@ -29,6 +39,7 @@ CREATE TABLE lignes_vente (
     id SERIAL PRIMARY KEY,
     vente_id INT REFERENCES ventes(id) ON DELETE CASCADE,
     produit_nom VARCHAR(100) NOT NULL,
+    category_id INT REFERENCES categories(id) ON DELETE SET NULL,
     quantite INT NOT NULL CHECK (quantite > 0),
     prix_unitaire NUMERIC(10, 2) NOT NULL CHECK (prix_unitaire >= 0),
     total_ligne NUMERIC(10, 2) GENERATED ALWAYS AS (quantite * prix_unitaire) STORED
@@ -48,6 +59,7 @@ CREATE TABLE lignes_achat (
     id SERIAL PRIMARY KEY,
     achat_id INT REFERENCES achats(id) ON DELETE CASCADE,
     produit_nom VARCHAR(100) NOT NULL,
+    category_id INT REFERENCES categories(id) ON DELETE SET NULL,
     quantite INT NOT NULL CHECK (quantite > 0),
     prix_unitaire NUMERIC(10, 2) NOT NULL CHECK (prix_unitaire >= 0),
     total_ligne NUMERIC(10, 2) GENERATED ALWAYS AS (quantite * prix_unitaire) STORED
@@ -56,12 +68,15 @@ CREATE TABLE lignes_achat (
 -- Indexes pour optimiser les performances
 CREATE INDEX idx_utilisateurs_email ON utilisateurs(email);
 CREATE INDEX idx_utilisateurs_role ON utilisateurs(role);
+CREATE INDEX idx_categories_nom ON categories(nom);
 CREATE INDEX idx_ventes_utilisateur_id ON ventes(utilisateur_id);
 CREATE INDEX idx_ventes_date ON ventes(date_vente);
 CREATE INDEX idx_lignes_vente_vente_id ON lignes_vente(vente_id);
+CREATE INDEX idx_lignes_vente_category_id ON lignes_vente(category_id);
 CREATE INDEX idx_achats_utilisateur_id ON achats(utilisateur_id);
 CREATE INDEX idx_achats_date ON achats(date_achat);
 CREATE INDEX idx_lignes_achat_achat_id ON lignes_achat(achat_id);
+CREATE INDEX idx_lignes_achat_category_id ON lignes_achat(category_id);
 
 -- Trigger pour mettre à jour automatiquement updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -76,8 +91,13 @@ CREATE TRIGGER update_utilisateurs_updated_at
     BEFORE UPDATE ON utilisateurs 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_categories_updated_at 
+    BEFORE UPDATE ON categories 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- RLS (Row Level Security) policies
 ALTER TABLE utilisateurs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ventes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lignes_vente ENABLE ROW LEVEL SECURITY;
 ALTER TABLE achats ENABLE ROW LEVEL SECURITY;
@@ -95,6 +115,15 @@ CREATE POLICY "Admins can view all users" ON utilisateurs
             WHERE id::text = auth.uid()::text AND role = 'admin'
         )
     );
+
+-- Politiques pour les catégories
+CREATE POLICY "Users can view all categories" ON categories FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Admins can manage categories" ON categories FOR ALL TO authenticated USING (
+    EXISTS (
+        SELECT 1 FROM utilisateurs 
+        WHERE id::text = auth.uid()::text AND role = 'admin'
+    )
+);
 
 -- Politiques pour les ventes
 CREATE POLICY "Users can view all sales" ON ventes FOR SELECT TO authenticated USING (true);
@@ -165,5 +194,19 @@ CREATE POLICY "Admins can view all activity logs" ON activity_logs
 -- Insertion d'un utilisateur admin par défaut (mot de passe: admin123)
 -- Hash bcrypt pour 'admin123': $2b$10$rOZPaNz0zK5qP1J0qZ5J9.Xv6QZ5J9eJ5qZ5J9eJ5qZ5J9eJ5qZ5J
 INSERT INTO utilisateurs (email, nom, prenom, role, password_hash) 
-VALUES ('admin@store.com', 'Admin', 'System', 'admin', '$2b$10$rOZPaNz0zK5qP1J0qZ5J9.Xv6QZ5J9eJ5qZ5J9eJ5qZ5J9eJ5qZ5J')
+VALUES ('admin@store.com', 
+    'Admin', 
+    'System', 
+    'admin', 
+    '$2b$10$ArnuuEeOcm4uZq7XrRcUSuBL6Dgnq242BvrPUp75HnqdWGluRLLXG')
 ON CONFLICT (email) DO NOTHING;
+
+-- Insertion de catégories par défaut
+INSERT INTO categories (nom, description, couleur) VALUES
+('Électronique', 'Appareils électroniques et accessoires', '#3B82F6'),
+('Vêtements', 'Vêtements et accessoires de mode', '#EF4444'),
+('Alimentation', 'Produits alimentaires et boissons', '#10B981'),
+('Beauté', 'Produits de beauté et soins personnels', '#F59E0B'),
+('Maison', 'Articles pour la maison et décoration', '#8B5CF6'),
+('Sport', 'Équipements et articles de sport', '#06B6D4')
+ON CONFLICT (nom) DO NOTHING;

@@ -6,6 +6,7 @@ export type UpdateTables<T extends keyof Database['public']['Tables']> = Databas
 
 // Application types
 export type User = Tables<'utilisateurs'>
+export type Category = Tables<'categories'>
 export type Sale = Tables<'ventes'>
 export type SaleLine = Tables<'lignes_vente'>
 export type Purchase = Tables<'achats'>
@@ -13,6 +14,7 @@ export type PurchaseLine = Tables<'lignes_achat'>
 export type ActivityLog = Tables<'activity_logs'>
 
 export type CreateUser = InsertTables<'utilisateurs'>
+export type CreateCategory = InsertTables<'categories'>
 export type CreateSale = InsertTables<'ventes'>
 export type CreateSaleLine = InsertTables<'lignes_vente'>
 export type CreatePurchase = InsertTables<'achats'>

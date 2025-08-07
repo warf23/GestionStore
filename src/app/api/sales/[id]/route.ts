@@ -101,6 +101,30 @@ export async function PUT(
       )
     }
 
+    // First, get category_id for each product by looking up the most recent purchase
+    const productNames = lignes.map((ligne: any) => ligne.produit_nom)
+    const { data: purchaseData, error: purchaseDataError } = await supabase
+      .from('lignes_achat')
+      .select('produit_nom, category_id')
+      .in('produit_nom', productNames)
+      .order('id', { ascending: false })
+
+    if (purchaseDataError) {
+      console.error('Error fetching product categories:', purchaseDataError)
+      return NextResponse.json(
+        { error: 'Erreur lors de la récupération des catégories de produits' },
+        { status: 500 }
+      )
+    }
+
+    // Create a map of product names to category IDs (use the most recent one)
+    const productCategoryMap = new Map()
+    purchaseData?.forEach((item: any) => {
+      if (!productCategoryMap.has(item.produit_nom)) {
+        productCategoryMap.set(item.produit_nom, item.category_id)
+      }
+    })
+
     // Calculate new total
     const total = lignes.reduce((sum: number, ligne: any) => 
       sum + (ligne.quantite * ligne.prix_unitaire), 0
@@ -128,10 +152,11 @@ export async function PUT(
       .delete()
       .eq('vente_id', params.id)
 
-    // Insert new lines
+    // Insert new lines with category_id
     const saleLines = lignes.map((ligne: any) => ({
       vente_id: parseInt(params.id),
       produit_nom: ligne.produit_nom,
+      category_id: productCategoryMap.get(ligne.produit_nom) || null,
       quantite: ligne.quantite,
       prix_unitaire: ligne.prix_unitaire
     }))

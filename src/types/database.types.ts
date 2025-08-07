@@ -56,11 +56,38 @@ export interface Database {
           total?: number
         }
       }
+      categories: {
+        Row: {
+          id: number
+          nom: string
+          description: string | null
+          couleur: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          nom: string
+          description?: string | null
+          couleur?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          nom?: string
+          description?: string | null
+          couleur?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       lignes_vente: {
         Row: {
           id: number
           vente_id: number
           produit_nom: string
+          category_id: number | null
           quantite: number
           prix_unitaire: number
           total_ligne: number
@@ -69,6 +96,7 @@ export interface Database {
           id?: number
           vente_id: number
           produit_nom: string
+          category_id?: number | null
           quantite: number
           prix_unitaire: number
         }
@@ -76,6 +104,7 @@ export interface Database {
           id?: number
           vente_id?: number
           produit_nom?: string
+          category_id?: number | null
           quantite?: number
           prix_unitaire?: number
         }
@@ -108,6 +137,7 @@ export interface Database {
           id: number
           achat_id: number
           produit_nom: string
+          category_id: number | null
           quantite: number
           prix_unitaire: number
           total_ligne: number
@@ -116,6 +146,7 @@ export interface Database {
           id?: number
           achat_id: number
           produit_nom: string
+          category_id?: number | null
           quantite: number
           prix_unitaire: number
         }
@@ -123,6 +154,7 @@ export interface Database {
           id?: number
           achat_id?: number
           produit_nom?: string
+          category_id?: number | null
           quantite?: number
           prix_unitaire?: number
         }

@@ -4,17 +4,20 @@ import { useState, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useQueryClient } from '@tanstack/react-query'
 import { X, Plus, Trash2, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useCreatePurchase, useUpdatePurchase } from '@/hooks/use-purchases'
+import { useCategories } from '@/hooks/use-categories'
 import { PurchaseWithLines } from '@/types'
 
 const purchaseSchema = z.object({
   nom_fournisseur: z.string().min(1, 'Le nom du fournisseur est requis'),
   lignes: z.array(z.object({
     produit_nom: z.string().min(1, 'Le nom du produit est requis'),
+    category_id: z.number().min(1, 'La catégorie est requise'),
     quantite: z.number().min(1, 'La quantité doit être au moins 1'),
     prix_unitaire: z.number().min(0, 'Le prix doit être positif'),
   })).min(1, 'Au moins une ligne d\'achat est requise'),
@@ -32,8 +35,10 @@ interface PurchaseFormModalProps {
 export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseFormModalProps) {
   const [error, setError] = useState<string | null>(null)
   
+  const queryClient = useQueryClient()
   const createMutation = useCreatePurchase()
   const updateMutation = useUpdatePurchase()
+  const { data: categories = [] } = useCategories()
 
   const {
     register,
@@ -46,7 +51,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
     resolver: zodResolver(purchaseSchema),
     defaultValues: {
       nom_fournisseur: '',
-      lignes: [{ produit_nom: '', quantite: 1, prix_unitaire: 0 }],
+      lignes: [{ produit_nom: '', category_id: 0, quantite: 1, prix_unitaire: 0 }],
     },
   })
 
@@ -70,6 +75,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
           nom_fournisseur: purchase.nom_fournisseur,
           lignes: purchase.lignes_achat.map(line => ({
             produit_nom: line.produit_nom,
+            category_id: line.category_id || (categories.length > 0 ? categories[0].id : 0),
             quantite: line.quantite,
             prix_unitaire: parseFloat(line.prix_unitaire.toString()),
           })),
@@ -77,7 +83,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
       } else {
         reset({
           nom_fournisseur: '',
-          lignes: [{ produit_nom: '', quantite: 1, prix_unitaire: 0 }],
+          lignes: [{ produit_nom: '', category_id: categories.length > 0 ? categories[0].id : 0, quantite: 1, prix_unitaire: 0 }],
         })
       }
       setError(null)
@@ -94,13 +100,18 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
         await updateMutation.mutateAsync({ id: purchase.id, ...data })
       }
       onClose()
+      // Force refresh of product suggestions immediately
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+        queryClient.invalidateQueries({ queryKey: ['product-stock'] })
+      }, 100)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue')
     }
   }
 
   const addLine = () => {
-    append({ produit_nom: '', quantite: 1, prix_unitaire: 0 })
+    append({ produit_nom: '', category_id: categories.length > 0 ? categories[0].id : 0, quantite: 1, prix_unitaire: 0 })
   }
 
   const removeLine = (index: number) => {
@@ -165,7 +176,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
               <div className="space-y-4">
                 {fields.map((field, index) => (
                   <div key={field.id} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <Label htmlFor={`lignes.${index}.produit_nom`}>Produit</Label>
                       <Input
                         {...register(`lignes.${index}.produit_nom`)}
@@ -175,6 +186,28 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
                       {errors.lignes?.[index]?.produit_nom && (
                         <p className="text-sm text-red-600 mt-1">
                           {errors.lignes[index]?.produit_nom?.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label htmlFor={`lignes.${index}.category_id`}>Catégorie</Label>
+                      <select
+                        {...register(`lignes.${index}.category_id`, { valueAsNumber: true })}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          errors.lignes?.[index]?.category_id ? 'border-red-500' : ''
+                        }`}
+                      >
+                        <option value="">Sélectionner...</option>
+                        {categories.map(category => (
+                          <option key={category.id} value={category.id}>
+                            {category.nom}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.lignes?.[index]?.category_id && (
+                        <p className="text-sm text-red-600 mt-1">
+                          {errors.lignes[index]?.category_id?.message}
                         </p>
                       )}
                     </div>
@@ -194,7 +227,7 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
                       )}
                     </div>
 
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <Label htmlFor={`lignes.${index}.prix_unitaire`}>Prix Unitaire (DH)</Label>
                       <Input
                         type="number"

@@ -5,6 +5,7 @@ import { BarChart3, ShoppingCart, Package, Users, TrendingUp, DollarSign, Refres
 import { useDashboardStats } from '@/hooks/use-dashboard'
 import { AuthUser } from '@/types'
 import { EmployeeDashboard } from './employee-dashboard'
+import { LowStockAlerts } from '@/components/alerts/low-stock-alerts'
 
 interface DashboardContentProps {
   user: AuthUser
@@ -127,6 +128,9 @@ export function DashboardContent({ user }: DashboardContentProps) {
           </div>
         </div>
       </div>
+
+      {/* Low Stock Alerts - Compact View */}
+      <LowStockAlerts compact={true} />
 
       {/* Main Stats Grid */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">

@@ -49,6 +49,18 @@ export function useCreatePurchase() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+      queryClient.invalidateQueries({ queryKey: ['product-stock'] })
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] })
+      
+      // Trigger a storage event to notify other components
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('inventory-updated', Date.now().toString())
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'inventory-updated',
+          newValue: Date.now().toString()
+        }))
+      }
     },
   })
 }
@@ -85,6 +97,18 @@ export function useUpdatePurchase() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+      queryClient.invalidateQueries({ queryKey: ['product-stock'] })
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] })
+      
+      // Trigger a storage event to notify other components
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('inventory-updated', Date.now().toString())
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'inventory-updated',
+          newValue: Date.now().toString()
+        }))
+      }
     },
   })
 }
@@ -109,6 +133,18 @@ export function useDeletePurchase() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['purchases'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['product-suggestions'] })
+      queryClient.invalidateQueries({ queryKey: ['product-stock'] })
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] })
+      
+      // Trigger a storage event to notify other components
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('inventory-updated', Date.now().toString())
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'inventory-updated',
+          newValue: Date.now().toString()
+        }))
+      }
     },
   })
 }
