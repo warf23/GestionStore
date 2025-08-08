@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useWoodTypes, useCreateWoodType, useUpdateWoodType, useDeleteWoodType } from '@/hooks/use-wood-types'
 import { WoodType } from '@/types'
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet'
+import { toast } from 'sonner'
 
 interface WoodTypeFormData {
   nom: string
@@ -45,8 +47,10 @@ export function WoodTypesManagement() {
     try {
       await createMutation.mutateAsync(formData)
       resetForm()
+      toast.success('Type de bois créé')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la création')
+      toast.error('Erreur lors de la création')
     }
   }
 
@@ -56,8 +60,10 @@ export function WoodTypesManagement() {
     try {
       await updateMutation.mutateAsync({ id: editingId, ...formData })
       resetForm()
+      toast.success('Type de bois mis à jour')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour')
+      toast.error('Erreur lors de la mise à jour')
     }
   }
 
@@ -66,8 +72,10 @@ export function WoodTypesManagement() {
     setError(null)
     try {
       await deleteMutation.mutateAsync(id)
+      toast.success('Type de bois supprimé')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la suppression')
+      toast.error('Erreur lors de la suppression')
     }
   }
 
@@ -109,86 +117,68 @@ export function WoodTypesManagement() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-600">{error}</p>
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
       {/* Create/Edit Form */}
       {(isCreating || editingId !== null) && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <h3 className="text-lg font-medium mb-4">
-            {isCreating ? 'Nouveau Type de Bois' : 'Modifier le Type de Bois'}
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="nom">Nom *</Label>
-              <Input
-                id="nom"
-                value={formData.nom}
-                onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
-                placeholder="Ex: Chêne, Pin, Hêtre..."
-                disabled={createMutation.isPending || updateMutation.isPending}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="couleur">Couleur</Label>
-              <div className="flex items-center space-x-2">
-                <Input
-                  id="couleur"
-                  type="color"
-                  value={formData.couleur}
-                  onChange={(e) => setFormData({ ...formData, couleur: e.target.value })}
-                  className="w-16 h-10 p-1"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                />
-                <div className="flex space-x-1">
-                  {predefinedColors.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className="w-6 h-6 rounded border border-gray-300 hover:scale-110 transition-transform"
-                      style={{ backgroundColor: color }}
-                      onClick={() => setFormData({ ...formData, couleur: color })}
+        <Sheet open={true} onOpenChange={(open) => { if (!open) resetForm() }}>
+          <SheetContent side="right" className="w-full max-w-[42vw] min-w-[360px] p-0">
+            <div className="flex h-full flex-col">
+              <SheetHeader className="border-b p-6">
+                <SheetTitle>{isCreating ? 'Nouveau Type de Bois' : 'Modifier le Type de Bois'}</SheetTitle>
+              </SheetHeader>
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="nom">Nom *</Label>
+                    <Input
+                      id="nom"
+                      value={formData.nom}
+                      onChange={(e) => setFormData({ ...formData, nom: e.target.value })}
+                      placeholder="Ex: Chêne, Pin, Hêtre..."
                       disabled={createMutation.isPending || updateMutation.isPending}
                     />
-                  ))}
+                  </div>
+                  <div>
+                    <Label htmlFor="couleur">Couleur</Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="couleur"
+                        type="color"
+                        value={formData.couleur}
+                        onChange={(e) => setFormData({ ...formData, couleur: e.target.value })}
+                        className="h-10 w-16 p-1"
+                        disabled={createMutation.isPending || updateMutation.isPending}
+                      />
+                      <div className="flex space-x-1">
+                        {predefinedColors.map((color) => (
+                          <button key={color} type="button" className="h-6 w-6 rounded border" style={{ backgroundColor: color }} onClick={() => setFormData({ ...formData, couleur: color })} disabled={createMutation.isPending || updateMutation.isPending} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="description">Description</Label>
+                    <Input id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="Description du type de bois..." disabled={createMutation.isPending || updateMutation.isPending} />
+                  </div>
                 </div>
               </div>
+              <SheetFooter className="border-t p-6">
+                <div className="flex w-full items-center justify-end gap-3">
+                  <SheetClose asChild>
+                    <Button variant="outline" disabled={createMutation.isPending || updateMutation.isPending} onClick={resetForm}>Annuler</Button>
+                  </SheetClose>
+                  <Button onClick={isCreating ? handleCreate : handleUpdate} disabled={!formData.nom || createMutation.isPending || updateMutation.isPending}>
+                    <Save className="mr-2 h-4 w-4" /> {isCreating ? 'Créer' : 'Mettre à jour'}
+                  </Button>
+                </div>
+              </SheetFooter>
             </div>
-
-            <div className="md:col-span-2">
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Description du type de bois..."
-                disabled={createMutation.isPending || updateMutation.isPending}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end space-x-3 mt-6">
-            <Button
-              variant="outline"
-              onClick={resetForm}
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Annuler
-            </Button>
-            <Button
-              onClick={isCreating ? handleCreate : handleUpdate}
-              disabled={!formData.nom || createMutation.isPending || updateMutation.isPending}
-            >
-              <Save className="h-4 w-4 mr-2" />
-              {isCreating ? 'Créer' : 'Mettre à jour'}
-            </Button>
-          </div>
-        </div>
+          </SheetContent>
+        </Sheet>
       )}
 
       {/* Wood Types List */}

@@ -13,6 +13,7 @@ import { useCreatePurchase, useUpdatePurchase } from '@/hooks/use-purchases'
 import { useCategories } from '@/hooks/use-categories'
 import { useWoodTypes } from '@/hooks/use-wood-types'
 import { PurchaseWithLines } from '@/types'
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet'
 
 const purchaseSchema = z.object({
   nom_fournisseur: z.string().min(1, 'Le nom du fournisseur est requis'),
@@ -124,30 +125,18 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
     }
   }
 
-  if (!isOpen) return null
-
   const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">
-            {mode === 'create' ? 'Nouvel Achat' : 'Modifier l\'Achat'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <SheetContent side="right" className="w-full max-w-[52vw] min-w-[420px] p-0">
+        <div className="flex h-full flex-col">
+          <SheetHeader className="border-b p-6">
+            <SheetTitle>{mode === 'create' ? 'Nouvel Achat' : "Modifier l'Achat"}</SheetTitle>
+          </SheetHeader>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="flex-1 overflow-y-auto p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Supplier Name */}
             <div>
               <Label htmlFor="nom_fournisseur">Nom du Fournisseur *</Label>
@@ -294,8 +283,8 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
             </div>
 
             {/* Total */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
+            <div className="rounded-lg border bg-muted p-4">
+              <div className="flex items-center justify-between">
                 <span className="text-lg font-medium">Total:</span>
                 <span className="text-2xl font-bold text-blue-600">
                   {total.toFixed(2)} DH
@@ -304,36 +293,35 @@ export function PurchaseFormModal({ isOpen, onClose, mode, purchase }: PurchaseF
             </div>
 
             {error && (
-              <div className="bg-red-50 p-4 rounded-lg">
-                <p className="text-sm text-red-600">{error}</p>
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
-          </form>
-        </div>
+            </form>
+          </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end space-x-4 p-6 border-t bg-gray-50">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Annuler
-          </Button>
-          <Button 
-            onClick={handleSubmit(onSubmit)} 
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                {mode === 'create' ? 'Création...' : 'Modification...'}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {mode === 'create' ? 'Créer l\'Achat' : 'Modifier l\'Achat'}
-              </>
-            )}
-          </Button>
+          <SheetFooter className="border-t p-6">
+            <div className="flex w-full items-center justify-end gap-3">
+              <SheetClose asChild>
+                <Button variant="outline" disabled={isLoading}>Annuler</Button>
+              </SheetClose>
+              <Button onClick={handleSubmit(onSubmit)} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                    {mode === 'create' ? 'Création...' : 'Modification...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {mode === 'create' ? "Créer l'Achat" : "Modifier l'Achat"}
+                  </>
+                )}
+              </Button>
+            </div>
+          </SheetFooter>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

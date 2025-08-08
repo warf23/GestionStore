@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, RefreshCw, ShoppingCart } from 'lucide-react'
+import { Plus, RefreshCw, ShoppingCart, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/data-table'
 import { createSalesColumns } from './sales-columns'
@@ -13,6 +13,9 @@ import { DeleteConfirmModal } from '@/components/modals/delete-confirm-modal'
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import { useCategories } from '@/hooks/use-categories'
 import { exportSalesReportPDF } from '@/lib/report-export'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function SalesTable() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -21,7 +24,7 @@ export function SalesTable() {
   const [deletingSale, setDeletingSale] = useState<SaleWithLines | null>(null)
 
   const [filters, setFilters] = useState<SalesFilters>({})
-  const { data: sales = [], isLoading, error, refetch } = useSales(filters)
+  const { data: sales = [], isLoading, error, refetch, isFetching } = useSales(filters) as any
   const { data: categories = [] } = useCategories()
   const deleteMutation = useDeleteSale()
 
@@ -69,39 +72,23 @@ export function SalesTable() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-white/40 backdrop-blur-xl border border-white/30 shadow-xl">
-        <div className="absolute inset-0 bg-gradient-to-br from-green-50/30 via-emerald-50/30 to-teal-50/30"></div>
-        
-        <div className="relative p-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg mr-4">
-                  <ShoppingCart className="h-6 w-6 text-white" />
-                </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-green-800 to-emerald-800 bg-clip-text text-transparent">
-                  Gestion des Ventes
-                </h1>
-              </div>
-              <p className="text-lg text-gray-700 font-medium">
-                Gérez toutes les ventes et transactions de votre magasin
-              </p>
-              <p className="mt-1 text-sm text-gray-500">
-                Suivez vos performances et analysez vos résultats en temps réel
-              </p>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <ShoppingCart className="h-5 w-5" />
             </div>
-            <Button 
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle Vente
-            </Button>
+            <div>
+              <CardTitle className="text-2xl">Gestion des Ventes</CardTitle>
+              <CardDescription>Gérez les ventes, filtrez et exportez vos données</CardDescription>
+            </div>
           </div>
-        </div>
-      </div>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nouvelle Vente
+          </Button>
+        </CardHeader>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
@@ -117,7 +104,7 @@ export function SalesTable() {
           <div className="absolute inset-0 bg-gradient-to-br from-green-50/30 to-emerald-50/30"></div>
           <div className="relative p-6">
             <div className="text-2xl font-bold text-green-600 mb-2">
-              {sales.reduce((sum, sale) => sum + parseFloat(sale.total.toString()), 0).toFixed(2)} DH
+              {sales.reduce((sum: number, sale: SaleWithLines) => sum + parseFloat(String(sale.total)), 0).toFixed(2)} DH
             </div>
             <div className="text-sm text-gray-600 font-medium">Chiffre d'Affaires</div>
           </div>
@@ -127,7 +114,7 @@ export function SalesTable() {
           <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 to-violet-50/30"></div>
           <div className="relative p-6">
             <div className="text-2xl font-bold text-purple-600 mb-2">
-              {sales.reduce((sum, sale) => sum + sale.lignes_vente.length, 0)}
+              {sales.reduce((sum: number, sale: SaleWithLines) => sum + sale.lignes_vente.length, 0)}
             </div>
             <div className="text-sm text-gray-600 font-medium">Articles Vendus</div>
           </div>
@@ -149,7 +136,7 @@ export function SalesTable() {
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/30 to-blue-50/30"></div>
           <div className="relative p-6">
             <div className="text-2xl font-bold text-indigo-600 mb-2">
-              {new Set(sales.map(sale => sale.utilisateur_id).filter(Boolean)).size}
+              {new Set(sales.map((sale: SaleWithLines) => sale.utilisateur_id).filter(Boolean)).size}
             </div>
             <div className="text-sm text-gray-600 font-medium">Vendeurs Actifs</div>
           </div>
@@ -177,52 +164,60 @@ export function SalesTable() {
                 <h3 className="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                   Liste des Ventes
                 </h3>
-                <div className="text-sm text-gray-500 bg-white/50 rounded-full px-3 py-1">
+                <div className="flex items-center gap-2 rounded-full border bg-muted px-3 py-1 text-sm text-muted-foreground">
+                  {isFetching && <RefreshCw className="h-3.5 w-3.5 animate-spin" />}
                   {sales.length} vente{sales.length !== 1 ? 's' : ''}
                 </div>
               </div>
               
               <div className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
                   <DateRangePicker
                     from={filters.from}
                     to={filters.to}
                     onChange={(r) => setFilters((f) => ({ ...f, ...r }))}
                   />
-                  <select
-                    value={filters.categoryId ?? ''}
-                    onChange={(e) => setFilters((f) => ({ ...f, categoryId: e.target.value ? Number(e.target.value) : undefined }))}
-                    className="h-10 rounded-md border px-3 text-sm"
-                  >
-                    <option value="">Toutes catégories</option>
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.id}>{c.nom}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Produit ou client..."
+                <Select
+                  value={filters.categoryId ? String(filters.categoryId) : 'all'}
+                  onValueChange={(value) =>
+                    setFilters((f) => ({
+                      ...f,
+                      categoryId: value === 'all' ? undefined : Number(value),
+                    }))
+                  }
+                >
+                    <SelectTrigger className="h-10 w-full">
+                      <SelectValue placeholder="Toutes catégories" />
+                    </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes catégories</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={String(c.id)}>{c.nom}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    placeholder="Rechercher produit ou client..."
                     value={filters.q || ''}
                     onChange={(e) => setFilters((f) => ({ ...f, q: e.target.value }))}
-                    className="h-10 rounded-md border px-3 text-sm min-w-[220px]"
+                    className="h-10 w-full"
                   />
                   <Button
-                    variant="outline"
+                    variant="destructive"
+                    className="h-10 w-full"
                     onClick={() => exportSalesReportPDF({
                       sales,
                       periodLabel: filters.from || filters.to ? `Période: ${(filters.from||'...')} → ${(filters.to||'...')}` : undefined,
                       filtersLabel: filters.categoryId || filters.q ? `Filtre: ${filters.categoryId ? 'Catégorie' : ''} ${filters.q ? ' / Mot-clé' : ''}` : undefined,
                     })}
                   >
-                    Export PDF
+                    <Download className="mr-2 h-4 w-4" /> Export PDF
                   </Button>
                 </div>
 
                 <DataTable
                 columns={columns}
                 data={sales}
-                searchKey="nom_client"
-                searchPlaceholder="Rechercher par nom de client..."
                 />
               </div>
             </div>

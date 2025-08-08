@@ -14,6 +14,7 @@ import { useCreateSale, useUpdateSale } from '@/hooks/use-sales'
 import { useProductSuggestions } from '@/hooks/use-product-suggestions'
 import { useProductStock } from '@/hooks/use-product-stock'
 import { SaleWithLines } from '@/types'
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet'
 
 const saleSchema = z.object({
   nom_client: z.string().min(1, 'Le nom du client est requis'),
@@ -67,8 +68,8 @@ const ProductLine = memo(({ field, index, register, errors, productOptions, hand
     : errors.lignes?.[index]?.quantite?.message
   
   return (
-    <div key={field.id} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg bg-gray-50/50">
-      <div className="col-span-5">
+    <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 sm:gap-4 items-end p-4 border rounded-lg bg-card">
+      <div className="sm:col-span-6">
         <Label htmlFor={`lignes.${index}.produit_nom`}>Produit *</Label>
         <ProductAutocomplete
           value={currentLine.produit_nom || ''}
@@ -89,9 +90,18 @@ const ProductLine = memo(({ field, index, register, errors, productOptions, hand
             {errors.lignes[index]?.produit_nom?.message}
           </p>
         )}
+        {selectedProduct && (
+          <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className={`inline-flex items-center gap-1 ${maxQuantity === 0 ? 'text-red-600' : maxQuantity <= 5 ? 'text-orange-600' : 'text-green-600'}`}>
+              <span className={`h-2 w-2 rounded-full ${maxQuantity === 0 ? 'bg-red-500' : maxQuantity <= 5 ? 'bg-orange-500' : 'bg-green-500'}`} />
+              Stock: {maxQuantity}
+            </span>
+            <span>Dernier prix: <span className="font-medium">{selectedProduct.dernier_prix_achat.toFixed(2)} DH</span></span>
+          </div>
+        )}
       </div>
 
-      <div className="col-span-2">
+      <div className="sm:col-span-2">
         <Label htmlFor={`lignes.${index}.quantite`}>
           Quantité * 
           {selectedProduct && (
@@ -100,20 +110,45 @@ const ProductLine = memo(({ field, index, register, errors, productOptions, hand
             </span>
           )}
         </Label>
-        <Input
-          type="number"
-          min="1"
-          max={maxQuantity > 0 ? maxQuantity : undefined}
-          {...register(`lignes.${index}.quantite`, { 
-            valueAsNumber: true,
-            onChange: () => setTimeout(() => {
-              // Trigger recalculation on next tick
-            }, 0)
-          })}
-          className={quantityError ? 'border-red-500' : ''}
-          placeholder="1"
-          disabled={!selectedProductName || maxQuantity === 0}
-        />
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              const next = Math.max(1, (selectedQuantity || 1) - 1)
+              setValue(`lignes.${index}.quantite`, next, { shouldValidate: true })
+            }}
+            disabled={!selectedProductName}
+          >
+            −
+          </Button>
+          <Input
+            type="number"
+            min="1"
+            max={maxQuantity > 0 ? maxQuantity : undefined}
+            {...register(`lignes.${index}.quantite`, { 
+              valueAsNumber: true,
+              onChange: () => setTimeout(() => {}, 0)
+            })}
+            className={quantityError ? 'border-red-500 text-center' : 'text-center'}
+            placeholder="1"
+            disabled={!selectedProductName || maxQuantity === 0}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              const current = selectedQuantity || 1
+              const next = maxQuantity ? Math.min(maxQuantity, current + 1) : current + 1
+              setValue(`lignes.${index}.quantite`, next, { shouldValidate: true })
+            }}
+            disabled={!selectedProductName || maxQuantity === 0}
+          >
+            +
+          </Button>
+        </div>
         {quantityError && (
           <p className="text-sm text-red-600 mt-1">
             {quantityError}
@@ -126,21 +161,30 @@ const ProductLine = memo(({ field, index, register, errors, productOptions, hand
         )}
       </div>
 
-      <div className="col-span-3">
+      <div className="sm:col-span-3">
         <Label htmlFor={`lignes.${index}.prix_unitaire`}>Prix Unitaire (DH) *</Label>
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          {...register(`lignes.${index}.prix_unitaire`, { 
-            valueAsNumber: true,
-            onChange: () => setTimeout(() => {
-              // Trigger recalculation on next tick
-            }, 0)
-          })}
-          className={errors.lignes?.[index]?.prix_unitaire ? 'border-red-500' : ''}
-          placeholder="0.00"
-        />
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            {...register(`lignes.${index}.prix_unitaire`, { 
+              valueAsNumber: true,
+              onChange: () => setTimeout(() => {}, 0)
+            })}
+            className={errors.lignes?.[index]?.prix_unitaire ? 'border-red-500' : ''}
+            placeholder="0.00"
+          />
+          {selectedProduct && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setValue(`lignes.${index}.prix_unitaire`, selectedProduct.dernier_prix_achat, { shouldValidate: true })}
+            >
+              Dernier prix
+            </Button>
+          )}
+        </div>
         {errors.lignes?.[index]?.prix_unitaire && (
           <p className="text-sm text-red-600 mt-1">
             {errors.lignes[index]?.prix_unitaire?.message}
@@ -148,14 +192,14 @@ const ProductLine = memo(({ field, index, register, errors, productOptions, hand
         )}
       </div>
 
-      <div className="col-span-1">
+      <div className="sm:col-span-1">
         <Label>Sous-total</Label>
-        <div className="text-sm font-medium text-green-600 mt-2 p-2 bg-green-50 rounded border">
+        <div className="mt-2 rounded border bg-muted p-2 text-sm font-medium text-green-600">
           {subtotal.toFixed(2)} DH
         </div>
       </div>
 
-      <div className="col-span-1">
+      <div className="sm:col-span-12 flex justify-end">
         <Button
           type="button"
           variant="ghost"
@@ -343,30 +387,18 @@ export function SaleFormModal({ isOpen, onClose, mode, sale }: SaleFormModalProp
     }
   }
 
-  if (!isOpen) return null
-
   const isLoading = createMutation.isPending || updateMutation.isPending
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">
-            {mode === 'create' ? 'Nouvelle Vente' : 'Modifier la Vente'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <X className="h-6 w-6" />
-          </button>
-        </div>
+    <Sheet open={isOpen} onOpenChange={(open) => { if (!open) onClose() }}>
+      <SheetContent side="right" className="w-full max-w-[60vw] min-w-[500px] p-0">
+        <div className="flex h-full flex-col">
+          <SheetHeader className="border-b p-6">
+            <SheetTitle>{mode === 'create' ? 'Nouvelle Vente' : 'Modifier la Vente'}</SheetTitle>
+          </SheetHeader>
 
-        {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="flex-1 overflow-y-auto p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Client Name */}
             <div>
               <Label htmlFor="nom_client">Nom du Client *</Label>
@@ -421,8 +453,8 @@ export function SaleFormModal({ isOpen, onClose, mode, sale }: SaleFormModalProp
             </div>
 
             {/* Total */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
+              <div className="rounded-lg border bg-muted p-4">
+                <div className="flex items-center justify-between">
                 <span className="text-lg font-medium">Total:</span>
                 <span className="text-2xl font-bold text-green-600">
                   {total.toFixed(2)} DH
@@ -431,36 +463,35 @@ export function SaleFormModal({ isOpen, onClose, mode, sale }: SaleFormModalProp
             </div>
 
             {error && (
-              <div className="bg-red-50 p-4 rounded-lg">
-                <div className="text-sm text-red-600 whitespace-pre-line">{error}</div>
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+                <div className="text-sm text-destructive whitespace-pre-line">{error}</div>
               </div>
             )}
-          </form>
-        </div>
+            </form>
+          </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end space-x-4 p-6 border-t bg-gray-50">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            Annuler
-          </Button>
-          <Button 
-            onClick={handleSubmit(onSubmit)} 
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                {mode === 'create' ? 'Création...' : 'Modification...'}
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                {mode === 'create' ? 'Créer la Vente' : 'Modifier la Vente'}
-              </>
-            )}
-          </Button>
+          <SheetFooter className="border-t p-6">
+            <div className="flex w-full items-center justify-end gap-3">
+              <SheetClose asChild>
+                <Button variant="outline" disabled={isLoading}>Annuler</Button>
+              </SheetClose>
+              <Button onClick={handleSubmit(onSubmit)} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                    {mode === 'create' ? 'Création...' : 'Modification...'}
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {mode === 'create' ? 'Créer la Vente' : 'Modifier la Vente'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </SheetFooter>
         </div>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

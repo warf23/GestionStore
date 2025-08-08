@@ -29,14 +29,26 @@ export interface DashboardStats {
   // Monthly stats
   monthlySales: number
   monthlyPurchases: number
+
+  // New analytics
+  dailySeries: Array<{ date: string; ventes: number; achats: number; revenus: number }>
+  topProducts: Array<{ name: string; quantite: number; revenus: number }>
+  salesByCategory: Array<{ category_id: number; name: string; quantite: number }>
 }
 
 // Fetch dashboard statistics
-export function useDashboardStats() {
+export function useDashboardStats(
+  range?: { from?: string; to?: string },
+  options?: { categoryId?: number | null }
+) {
   return useQuery({
-    queryKey: ['dashboard-stats'],
+    queryKey: ['dashboard-stats', range?.from ?? null, range?.to ?? null, options?.categoryId ?? null],
     queryFn: async (): Promise<DashboardStats> => {
-      const response = await fetch('/api/dashboard/stats')
+      const params = new URLSearchParams()
+      if (range?.from) params.set('from', range.from)
+      if (range?.to) params.set('to', range.to)
+      if (options?.categoryId) params.set('category_id', String(options.categoryId))
+      const response = await fetch(`/api/dashboard/stats${params.toString() ? `?${params.toString()}` : ''}`)
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard stats')
       }
